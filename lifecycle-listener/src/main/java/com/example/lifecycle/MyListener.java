@@ -15,6 +15,9 @@ import org.apache.catalina.LifecycleListener;
  *   <li>Register it to context component (<tt>context.xml</tt>) to listen context events
  * </ul>
  *
+ * <p>When registering to server component, be aware of the scope: it varies depending on which
+ * element the listener is nested. It can be Server, Service, Engine, or Host.
+ *
  * @author Mincong Huang
  */
 @SuppressWarnings("unused")

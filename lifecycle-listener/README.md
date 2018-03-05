@@ -64,10 +64,13 @@ $ cd ~/apache-tomcat-8.5.28
 Here's a demo for showing how to integrate `MyListener` as a server-level
 listener:
 
-- Edit server configuration file `conf/server.xml`:
+- Register listener to server component via configuration file `conf/server.xml`:
 
   ```xml
-  <Listener className="com.example.lifecycle.MyListener" />
+  <Server>
+    <Listener className="com.example.lifecycle.MyListener" />
+    ...
+  </Server>
   ```
 
 - Start and stop Tomcat server:
@@ -91,7 +94,7 @@ listener:
       03-Mar-2018 08:51:01.129 INFO [main] com.example.lifecycle.MyListener.lifecycleEvent StandardServer:before_destroy
       03-Mar-2018 08:51:01.133 INFO [main] com.example.lifecycle.MyListener.lifecycleEvent StandardServer:after_destroy
 
-### Server and Context Lifecycle
+### Full Lifecycle
 
 In the previous section, we took a look at server-level lifecycle events. Now, I
 will show you the complete lifecycle for starting Tomcat and web applications.
@@ -99,13 +102,55 @@ In order to do this, we need to register the listener to both server component
 via `server.xml` and context component via `context.xml`. Finally, analyse the
 log as I did previously.
 
+Register listener to all elements in `server.xml`:
+
+```xml
+<Server>
+  <Listener className="com.example.lifecycle.MyListener" />
+  ...
+  <Service>
+    <Listener className="com.example.lifecycle.MyListener" />
+    ...
+    <Engine>
+      <Listener className="com.example.lifecycle.MyListener" />
+      ...
+      <Host>
+        <Listener className="com.example.lifecycle.MyListener" />
+        ...
+      </Host>
+    </Engine>
+  </Service>
+</Server>
+```
+
+Register listener to all elements in `context.xml`:
+
+```xml
+<Context>
+  <Listener className="com.example.lifecycle.MyListener" />
+  ...
+</Context>
+```
+
+Check the results:
+
 ```
 $ grep MyListener logs/catalina.out | cut -d ' ' -f 6-
 StandardServer:before_init
+StandardService:before_init
+StandardEngine[Catalina]:before_init
+StandardEngine[Catalina]:after_init
+StandardService:after_init
 StandardServer:after_init
 StandardServer:before_start
 StandardServer:configure_start
 StandardServer:start
+StandardService:before_start
+StandardService:start
+StandardEngine[Catalina]:before_start
+StandardHost[localhost]:before_init
+StandardHost[localhost]:after_init
+StandardHost[localhost]:before_start
 StandardContext[/docs]:before_start
 StandardContext[/docs]:configure_start
 StandardContext[/docs]:start
@@ -126,10 +171,21 @@ StandardContext[/host-manager]:before_start
 StandardContext[/host-manager]:configure_start
 StandardContext[/host-manager]:start
 StandardContext[/host-manager]:after_start
+StandardHost[localhost]:start
+StandardHost[localhost]:after_start
+StandardEngine[Catalina]:start
+StandardEngine[Catalina]:after_start
+StandardService:after_start
 StandardServer:after_start
 StandardServer:before_stop
 StandardServer:stop
 StandardServer:configure_stop
+StandardService:before_stop
+StandardService:stop
+StandardEngine[Catalina]:before_stop
+StandardEngine[Catalina]:stop
+StandardHost[localhost]:before_stop
+StandardHost[localhost]:stop
 StandardContext[]:before_stop
 StandardContext[]:stop
 StandardContext[]:configure_stop
@@ -150,8 +206,14 @@ StandardContext[/docs]:before_stop
 StandardContext[/docs]:stop
 StandardContext[/docs]:configure_stop
 StandardContext[/docs]:after_stop
+StandardHost[localhost]:after_stop
+StandardEngine[Catalina]:after_stop
+StandardService:after_stop
 StandardServer:after_stop
 StandardServer:before_destroy
+StandardService:before_destroy
+StandardEngine[Catalina]:before_destroy
+StandardHost[localhost]:before_destroy
 StandardContext[]:before_destroy
 StandardContext[]:after_destroy
 StandardContext[/examples]:before_destroy
@@ -162,6 +224,9 @@ StandardContext[/manager]:before_destroy
 StandardContext[/manager]:after_destroy
 StandardContext[/docs]:before_destroy
 StandardContext[/docs]:after_destroy
+StandardHost[localhost]:after_destroy
+StandardEngine[Catalina]:after_destroy
+StandardService:after_destroy
 StandardServer:after_destroy
 ```
 

@@ -10,11 +10,11 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>tomcat-filter</artifactId>
+  <artifactId>git-server</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>war</packaging>
 
-  <name>Tomcat Demo - Servlet and Filter</name>
+  <name>Tomcat Demo - Git Server</name>
 
   <dependencies>
     <dependency>
@@ -23,13 +23,13 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
+      <groupId>org.eclipse.jgit</groupId>
+      <artifactId>org.eclipse.jgit.http.server</artifactId>
+      <version>4.8.0.201706111038-r</version>
     </dependency>
   </dependencies>
 
   <build>
-    <finalName>filter</finalName>
+    <finalName>git</finalName>
   </build>
 </project>

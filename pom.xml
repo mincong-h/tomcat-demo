@@ -17,6 +17,7 @@
   <modules>
     <module>lifecycle-listener</module>
     <module>filter</module>
+    <module>git-server</module>
   </modules>
 
   <dependencyManagement>
@@ -30,6 +31,11 @@
         <groupId>javax.servlet</groupId>
         <artifactId>javax.servlet-api</artifactId>
         <version>3.1.0</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.jgit</groupId>
+        <artifactId>org.eclipse.jgit.http.server</artifactId>
+        <version>4.8.0.201706111038-r</version>
       </dependency>
       <dependency>
         <groupId>junit</groupId>
@@ -54,5 +60,20 @@
         </plugin>
       </plugins>
     </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.cargo</groupId>
+        <artifactId>cargo-maven2-plugin</artifactId>
+        <configuration>
+          <container>
+            <containerId>tomcat8x</containerId>
+            <zipUrlInstaller>
+              <url>http://repo1.maven.org/maven2/org/apache/tomcat/tomcat/8.5.9/tomcat-8.5.9.zip
+              </url>
+            </zipUrlInstaller>
+          </container>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
 </project>

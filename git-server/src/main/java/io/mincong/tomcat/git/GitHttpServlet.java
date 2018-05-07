@@ -12,7 +12,7 @@ import org.eclipse.jgit.http.server.GitServlet;
      * repositories within a directory. This directory must not
      * itself be a Git repository.
      */
-    @WebInitParam(name = "base-path", value = "/Users/mincong/Desktop/server"),
+    @WebInitParam(name = "base-path", value = R.BASE_PATH),
     /*
      * Parameter `export-all` defines whether export all the
      * directories below. If set to `yes`, `true`, `1`, or `on`,
@@ -27,4 +27,10 @@ import org.eclipse.jgit.http.server.GitServlet;
     @WebInitParam(name = "export-all", value = "true")
   }
 )
-public class GitHttpServlet extends GitServlet {}
+public class GitHttpServlet extends GitServlet {
+
+  public GitHttpServlet() {
+    super();
+    super.setRepositoryResolver(new GitlabResolver());
+  }
+}

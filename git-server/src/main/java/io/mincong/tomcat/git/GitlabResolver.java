@@ -1,9 +1,10 @@
 package io.mincong.tomcat.git;
 
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
@@ -17,6 +18,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.transport.resolver.RepositoryResolver;
 import org.glassfish.jersey.logging.LoggingFeature;
 
@@ -41,7 +43,9 @@ public class GitlabResolver implements RepositoryResolver<HttpServletRequest> {
 
   private Feature loggingFeature = new LoggingFeature(LOGGER, Level.INFO, null, null);
 
-  private Map<String, Repository> repositoryMap = new HashMap<>();
+  private static ConcurrentMap<String, Repository> repositoryMap = new ConcurrentHashMap<>();
+
+  private File baseDir = new File(R.REPOSITORIES_PATH);
 
   /**
    * {@inheritDoc}
@@ -58,19 +62,18 @@ public class GitlabResolver implements RepositoryResolver<HttpServletRequest> {
       LOGGER.severe("Wrong path: " + req.getPathInfo());
       throw new RepositoryNotFoundException("Failed to find repo");
     }
-    Repository repo;
-    if (repositoryMap.containsKey(name)) {
-      repo = repositoryMap.get(name);
-    } else {
-      try {
-        repo = clone(name);
-      } catch (GitAPIException e) {
-        LOGGER.severe(e.getMessage());
-        throw new RepositoryNotFoundException("Failed to find repo", e);
-      }
-      repositoryMap.put(name, repo);
+    try {
+      repositoryMap.computeIfAbsent(name, this::clone);
+    } catch (RuntimeGitException e) {
+      throw new RepositoryNotFoundException(e.getMessage(), e.getCause());
     }
-    return repo;
+    return repositoryMap.get(name);
+  }
+
+  private static class RuntimeGitException extends RuntimeException {
+    RuntimeGitException(String message, Throwable cause) {
+      super(message, cause);
+    }
   }
 
   /**
@@ -78,14 +81,35 @@ public class GitlabResolver implements RepositoryResolver<HttpServletRequest> {
    *
    * @param name name of the repository with `.git` suffix
    */
-  private Repository clone(String name) throws GitAPIException {
-    CloneCommand command =
-        Git.cloneRepository()
-            .setBare(true)
-            .setRemote("origin")
-            .setURI(GitLab.getCloneUrl(name))
-            .setDirectory(R.getRepositoryDir(name));
-    return command.call().getRepository();
+  Repository clone(String name) {
+    String msg = System.currentTimeMillis() + " cloning repository " + name;
+    LOGGER.info(msg);
+    try {
+      CloneCommand command =
+          Git.cloneRepository()
+              .setBare(true)
+              .setRemote("origin")
+              .setURI(GitLab.getCloneUrl(name))
+              .setDirectory(getRepositoryDir(name))
+              .setCredentialsProvider(
+                  new UsernamePasswordCredentialsProvider(GitLab.USER, GitLab.PASS));
+      return command.call().getRepository();
+    } catch (GitAPIException e) {
+      LOGGER.log(Level.SEVERE, e.getMessage(), e);
+      throw new RuntimeGitException(e.getMessage(), e.getCause());
+    }
+  }
+
+  private File getRepositoryDir(String name) {
+    return new File(getBaseDir(), name);
+  }
+
+  public File getBaseDir() {
+    return baseDir;
+  }
+
+  public void setBaseDir(File baseDir) {
+    this.baseDir = baseDir;
   }
 
   /**

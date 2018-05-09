@@ -3,6 +3,8 @@ package io.mincong.tomcat.git;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.client.ClientBuilder;
@@ -25,7 +27,7 @@ public class GitlabResolver implements RepositoryResolver<HttpServletRequest> {
 
   private static final Logger LOGGER = Logger.getLogger(GitlabResolver.class.getName());
 
-  private Repository app2;
+  private Map<String, Repository> repositoryMap = new HashMap<>();
 
   @Override
   public Repository open(HttpServletRequest req, String name) throws RepositoryNotFoundException {
@@ -33,23 +35,29 @@ public class GitlabResolver implements RepositoryResolver<HttpServletRequest> {
       LOGGER.severe("Wrong path: " + req.getPathInfo());
       throw new RepositoryNotFoundException("Failed to find repo");
     }
-
-    if (app2 == null) {
-      CloneCommand command =
-          Git.cloneRepository()
-              .setBare(true)
-              .setRemote("origin")
-              .setURI(R.BASE_PATH + R.APP2)
-              .setDirectory(new File(R.DESKTOP_PATH));
-
+    Repository repo;
+    if (repositoryMap.containsKey(name)) {
+      repo = repositoryMap.get(name);
+    } else {
       try {
-        app2 = command.call().getRepository();
+        repo = clone(name);
       } catch (GitAPIException e) {
         LOGGER.severe(e.getMessage());
         throw new RepositoryNotFoundException("Failed to find repo", e);
       }
+      repositoryMap.put(name, repo);
     }
-    return app2;
+    return repo;
+  }
+
+  private Repository clone(String name) throws GitAPIException {
+    CloneCommand command =
+        Git.cloneRepository()
+            .setBare(true)
+            .setRemote("origin")
+            .setURI(R.BASE_PATH + name)
+            .setDirectory(new File(R.DESKTOP_PATH));
+    return command.call().getRepository();
   }
 
   /**
@@ -76,7 +84,8 @@ public class GitlabResolver implements RepositoryResolver<HttpServletRequest> {
             .header(HttpHeaders.AUTHORIZATION, credentials)
             .get();
 
-    LOGGER.info(r.readEntity(String.class));
+    String content = r.readEntity(String.class);
+    LOGGER.info(content);
     return r.getStatusInfo() == Status.OK;
   }
 }

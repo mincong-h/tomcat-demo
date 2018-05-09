@@ -1,6 +1,5 @@
 package io.mincong.tomcat.git;
 
-import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
@@ -19,9 +18,19 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.resolver.RepositoryResolver;
 
 /**
- * GitLab resolver is a fake resolver. It asks GitLab server <tt>http://localhost:80</tt> if the
- * target project exists: if exists, it returns a fake repository stored in {@link
- * R#FAKE_REPO_PATH}, else it raise an exception.
+ * GitLab resolver resolves HTTP request against a GitLab server backend. It checks project
+ * existence in GitLab server: if exists, it clones and returns the repository from GitLab,
+ * else it raise an exception.
+ *
+ * <p>The Git bare repositories, cloned from GitLab, are stored in the following directory:
+ *
+ * <pre>
+ * /Users/mincong/Desktop/server/${name}.git
+ * </pre>
+ *
+ * <p>GitLab server is running on <tt>http://localhost:80</tt>
+ *
+ * @author Mincong Huang
  */
 public class GitlabResolver implements RepositoryResolver<HttpServletRequest> {
 
@@ -31,6 +40,10 @@ public class GitlabResolver implements RepositoryResolver<HttpServletRequest> {
 
   @Override
   public Repository open(HttpServletRequest req, String name) throws RepositoryNotFoundException {
+    // Debug
+    String msg = "(req, name)=(\"" + req.getPathInfo() + "\",\"" + name + "\")";
+    LOGGER.info(msg);
+
     if (!hasRepository(req.getPathInfo())) {
       LOGGER.severe("Wrong path: " + req.getPathInfo());
       throw new RepositoryNotFoundException("Failed to find repo");
@@ -55,8 +68,8 @@ public class GitlabResolver implements RepositoryResolver<HttpServletRequest> {
         Git.cloneRepository()
             .setBare(true)
             .setRemote("origin")
-            .setURI(R.BASE_PATH + name)
-            .setDirectory(new File(R.DESKTOP_PATH));
+            .setURI(GitLab.getCloneUrl(name))
+            .setDirectory(R.getRepositoryDir(name));
     return command.call().getRepository();
   }
 
@@ -67,7 +80,7 @@ public class GitlabResolver implements RepositoryResolver<HttpServletRequest> {
    */
   private boolean hasRepository(String name) {
     // Basic auth
-    byte[] bytes = "root:localhost".getBytes(StandardCharsets.UTF_8);
+    byte[] bytes = R.FAKE_CREDENTIALS.getBytes(StandardCharsets.UTF_8);
     String credentials = new String(Base64.getEncoder().encode(bytes), StandardCharsets.UTF_8);
 
     // API
@@ -77,7 +90,7 @@ public class GitlabResolver implements RepositoryResolver<HttpServletRequest> {
     String projectId = name.substring(name.length() - 4);
     Response r =
         ClientBuilder.newClient()
-            .target(R.GITLAB_API)
+            .target(GitLab.REST_API)
             .path("projects")
             .path(projectId)
             .request()

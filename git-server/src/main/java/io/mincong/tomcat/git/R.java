@@ -1,19 +1,28 @@
 package io.mincong.tomcat.git;
 
+import java.io.File;
+
 public final class R {
 
-  public static final String BASE_PATH = "/Users/mincong/Desktop/server/";
+  /**
+   * Repositories path is the root path in which all the Git repositories of the git-server are
+   * stored.
+   */
+  public static final String REPOSITORIES_PATH = "/Users/mincong/Desktop/server/";
 
-  public static final String DESKTOP_PATH = "/Users/mincong/Desktop/middle/";
-
-  public static final String FAKE_REPO_PATH = BASE_PATH + "fake.git";
-
-  public static final String GITLAB_API = "http://localhost/api/v3/";
-
-  public static final String APP2 = "app2.git";
+  public static final String FAKE_CREDENTIALS = "foo:password";
 
   private R() {
     // Utility class, do not instantiate
   }
 
+  /**
+   * Gets the repository directory path in which the target repository is stored.
+   *
+   * @param name name of the target repository, ends without `.git` suffix
+   * @return the repository directory
+   */
+  public static File getRepositoryDir(String name) {
+    return new File(R.REPOSITORIES_PATH, name + ".git");
+  }
 }

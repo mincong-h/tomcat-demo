@@ -10,8 +10,6 @@ public final class R {
    */
   public static final String REPOSITORIES_PATH = "/Users/mincong/Desktop/server/";
 
-  public static final String FAKE_CREDENTIALS = "foo:password";
-
   private R() {
     // Utility class, do not instantiate
   }
@@ -19,10 +17,10 @@ public final class R {
   /**
    * Gets the repository directory path in which the target repository is stored.
    *
-   * @param name name of the target repository, ends without `.git` suffix
+   * @param name name of the repository with `.git` suffix
    * @return the repository directory
    */
   public static File getRepositoryDir(String name) {
-    return new File(R.REPOSITORIES_PATH, name + ".git");
+    return new File(R.REPOSITORIES_PATH, name);
   }
 }

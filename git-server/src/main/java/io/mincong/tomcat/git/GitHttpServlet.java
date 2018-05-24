@@ -2,7 +2,12 @@ package io.mincong.tomcat.git;
 
 import javax.servlet.annotation.WebInitParam;
 import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServletRequest;
 import org.eclipse.jgit.http.server.GitServlet;
+import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.transport.ReceivePack;
+import org.eclipse.jgit.transport.resolver.ReceivePackFactory;
 
 @WebServlet(
   urlPatterns = "/*",
@@ -27,4 +32,18 @@ import org.eclipse.jgit.http.server.GitServlet;
     @WebInitParam(name = "export-all", value = "true")
   }
 )
-public class GitHttpServlet extends GitServlet {}
+public class GitHttpServlet extends GitServlet {
+  public GitHttpServlet() {
+    super.setReceivePackFactory(new AnonymousReceivePackFactory());
+  }
+
+  private static class AnonymousReceivePackFactory
+      implements ReceivePackFactory<HttpServletRequest> {
+    @Override
+    public ReceivePack create(HttpServletRequest req, Repository db) {
+      ReceivePack pack = new ReceivePack(db);
+      pack.setRefLogIdent(new PersonIdent("Anonymous", "anonymous@locahost"));
+      return pack;
+    }
+  }
+}

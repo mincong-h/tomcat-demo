@@ -27,6 +27,10 @@
       <artifactId>org.eclipse.jgit.http.server</artifactId>
       <version>4.8.0.201706111038-r</version>
     </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+    </dependency>
   </dependencies>
 
   <build>

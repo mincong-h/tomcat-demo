@@ -42,7 +42,7 @@ public class GitHttpServlet extends GitServlet {
     @Override
     public ReceivePack create(HttpServletRequest req, Repository db) {
       ReceivePack pack = new ReceivePack(db);
-      pack.setRefLogIdent(new PersonIdent("Anonymous", "anonymous@locahost"));
+      pack.setRefLogIdent(new PersonIdent("Anonymous", "anonymous@localhost"));
       return pack;
     }
   }
